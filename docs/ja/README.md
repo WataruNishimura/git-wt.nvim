@@ -1,6 +1,6 @@
 # git-wt.nvim
 
-[git-wt](https://github.com/k1LoW/git-wt) を Neovim から操作するためのプラグインです。
+[git-wt](https://github.com/k1LoW/git-wt) CLI の Neovim ラッパープラグインです。独自の worktree ロジックは持たず、すべての操作を `git-wt` に委譲し、その上に Neovim ネイティブなインターフェースを提供します。
 
 Telescope ピッカー（または `vim.ui.select`）から worktree を切り替えると、Neovim の作業ディレクトリが自動的に変更され、neo-tree や lualine などのプラグインも連動します。
 
@@ -42,11 +42,12 @@ use {
 | コマンド | 説明 |
 |---|---|
 | `:GitWt` | ピッカーを開いて worktree を選択・切り替え |
+| `:GitWt <branch> [start-point]` | worktree に切り替え（なければ作成） |
 | `:GitWt list` | worktree の一覧を表示 |
-| `:GitWt switch <branch>` | 指定ブランチの worktree に切り替え |
-| `:GitWt create <branch> [start-point]` | 新しい worktree を作成して切り替え |
 | `:GitWt delete <branch> [--force]` | worktree を削除 |
 | `:GitWt status` | 現在の worktree 情報を表示 |
+
+`git-wt` CLI と同様に、`:GitWt <branch>` で切り替えと作成を一つのコマンドで処理します。
 
 サブコマンドとブランチ名はタブ補完に対応しています。
 
@@ -100,11 +101,9 @@ git_wt.list(function(worktrees)
   -- worktrees: { { path, branch, head, bare, current }, ... }
 end)
 
--- パスを指定して worktree に切り替え
-git_wt.switch("/path/to/worktree")
-
--- 新しい worktree を作成
-git_wt.create("feature-branch", "origin/main", function(path)
+-- worktree に切り替え（なければ作成）
+git_wt.checkout("feature-branch")
+git_wt.checkout("feature-branch", "origin/main", function(path)
   -- 失敗時は path が nil
 end)
 

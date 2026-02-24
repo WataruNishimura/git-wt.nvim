@@ -1,6 +1,6 @@
 # git-wt.nvim
 
-A Neovim plugin for managing Git worktrees via [git-wt](https://github.com/k1LoW/git-wt).
+A Neovim wrapper for the [git-wt](https://github.com/k1LoW/git-wt) CLI. This plugin does not implement its own worktree logic — it delegates all operations to `git-wt` and provides a Neovim-native interface on top of it.
 
 Switch worktrees from a Telescope picker (or `vim.ui.select`), and Neovim's working directory changes automatically — neo-tree, lualine, and other plugins follow along.
 
@@ -42,11 +42,12 @@ use {
 | Command | Description |
 |---|---|
 | `:GitWt` | Open picker to select and switch worktree |
+| `:GitWt <branch> [start-point]` | Switch to worktree (create if it doesn't exist) |
 | `:GitWt list` | List all worktrees |
-| `:GitWt switch <branch>` | Switch to the worktree for `<branch>` |
-| `:GitWt create <branch> [start-point]` | Create a new worktree and switch to it |
 | `:GitWt delete <branch> [--force]` | Delete a worktree |
 | `:GitWt status` | Show current worktree info |
+
+Just like the `git-wt` CLI, `:GitWt <branch>` handles both switching and creation in a single command.
 
 All subcommands and branch names support tab completion.
 
@@ -100,11 +101,9 @@ git_wt.list(function(worktrees)
   -- worktrees: { { path, branch, head, bare, current }, ... }
 end)
 
--- Switch to a worktree by path
-git_wt.switch("/path/to/worktree")
-
--- Create a new worktree
-git_wt.create("feature-branch", "origin/main", function(path)
+-- Switch to worktree (create if it doesn't exist)
+git_wt.checkout("feature-branch")
+git_wt.checkout("feature-branch", "origin/main", function(path)
   -- path is nil on failure
 end)
 

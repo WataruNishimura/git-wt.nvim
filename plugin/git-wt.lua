@@ -3,20 +3,22 @@ if vim.g.loaded_git_wt then
 end
 vim.g.loaded_git_wt = true
 
+local SUBCMDS = { "list", "delete", "status" }
+
 vim.api.nvim_create_user_command("GitWt", function(opts)
   local git_wt = require("git-wt")
   local ui = require("git-wt.ui")
   local args = opts.fargs
 
-  local subcmd = args[1]
+  local first = args[1]
 
-  if not subcmd or subcmd == "" then
-    -- No subcommand: open picker
+  if not first or first == "" then
+    -- No args: open picker
     ui.pick_switch()
     return
   end
 
-  if subcmd == "list" or subcmd == "ls" then
+  if first == "list" or first == "ls" then
     git_wt.list(function(worktrees)
       local lines = {}
       for _, wt in ipairs(worktrees) do
@@ -25,39 +27,18 @@ vim.api.nvim_create_user_command("GitWt", function(opts)
       end
       vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
     end)
-  elseif subcmd == "switch" or subcmd == "cd" or subcmd == "enter" then
-    local name = args[2]
-    if not name then
-      ui.pick_switch()
-      return
-    end
-    -- Find the worktree by branch name and switch
-    git_wt.list(function(worktrees)
-      for _, wt in ipairs(worktrees) do
-        if wt.branch == name then
-          git_wt.switch(wt.path)
-          return
-        end
-      end
-      vim.notify("git-wt: worktree '" .. name .. "' not found", vim.log.levels.ERROR)
-    end)
-  elseif subcmd == "create" then
-    local name = args[2]
-    if not name then
-      ui.prompt_create()
-      return
-    end
-    local start_point = args[3]
-    git_wt.create(name, start_point)
-  elseif subcmd == "delete" or subcmd == "rm" or subcmd == "remove" then
+  elseif first == "delete" or first == "rm" or first == "-d" or first == "-D" then
+    local force = first == "-D"
     local name = args[2]
     if not name then
       vim.notify("git-wt: branch name required for delete", vim.log.levels.ERROR)
       return
     end
-    local force = args[3] == "--force" or args[3] == "-f"
+    if not force then
+      force = args[3] == "--force" or args[3] == "-f"
+    end
     git_wt.delete(name, force)
-  elseif subcmd == "status" then
+  elseif first == "status" then
     git_wt.list(function(worktrees)
       for _, wt in ipairs(worktrees) do
         if wt.current then
@@ -71,28 +52,35 @@ vim.api.nvim_create_user_command("GitWt", function(opts)
       vim.notify("git-wt: not in a worktree", vim.log.levels.WARN)
     end)
   else
-    vim.notify(
-      "git-wt: unknown subcommand '" .. subcmd .. "'\n"
-        .. "Available: list, switch, create, delete, status\n"
-        .. "Or run :GitWt with no args to open picker",
-      vim.log.levels.ERROR
-    )
+    -- Treat as: :GitWt <branch> [start-point]
+    local name = first
+    local start_point = args[2]
+    git_wt.checkout(name, start_point)
   end
 end, {
   nargs = "*",
   complete = function(arg_lead, cmd_line, cursor_pos)
     local parts = vim.split(cmd_line, "%s+", { trimempty = true })
-    -- Complete subcommands
-    if #parts <= 2 and not cmd_line:match("%s$") or (#parts == 1 and cmd_line:match("%s$")) then
-      local subcmds = { "list", "switch", "create", "delete", "status" }
+    local typing_first = #parts <= 2 and not cmd_line:match("%s$") or (#parts == 1 and cmd_line:match("%s$"))
+
+    if typing_first then
+      -- Complete subcommands + branch names
+      local candidates = vim.list_extend({}, SUBCMDS)
+      local stdout = vim.fn.system({ "git-wt", "--json", "--nocd" })
+      local ok, worktrees = pcall(vim.json.decode, stdout)
+      if ok and type(worktrees) == "table" then
+        for _, wt in ipairs(worktrees) do
+          table.insert(candidates, wt.branch)
+        end
+      end
       return vim.tbl_filter(function(s)
         return s:find(arg_lead, 1, true) == 1
-      end, subcmds)
+      end, candidates)
     end
 
-    -- Complete branch names for switch/delete
+    -- Complete branch names for delete
     local subcmd = parts[2]
-    if subcmd == "switch" or subcmd == "cd" or subcmd == "enter" or subcmd == "delete" or subcmd == "rm" or subcmd == "remove" then
+    if subcmd == "delete" or subcmd == "rm" or subcmd == "-d" or subcmd == "-D" then
       local stdout = vim.fn.system({ "git-wt", "--json", "--nocd" })
       local ok, worktrees = pcall(vim.json.decode, stdout)
       if ok and type(worktrees) == "table" then

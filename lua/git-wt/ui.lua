@@ -43,7 +43,7 @@ function M._select_pick(worktrees)
       vim.notify("git-wt: already in this worktree", vim.log.levels.INFO)
       return
     end
-    git_wt.switch(choice.path)
+    git_wt.checkout(choice.branch)
   end)
 end
 
@@ -104,7 +104,7 @@ function M._telescope_pick(worktrees)
             vim.notify("git-wt: already in this worktree", vim.log.levels.INFO)
             return
           end
-          git_wt.switch(wt.path)
+          git_wt.checkout(wt.branch)
         end)
 
         -- <C-d>: delete worktree
@@ -137,18 +137,6 @@ function M._telescope_pick(worktrees)
       end,
     })
     :find()
-end
-
---- Prompt user for input to create a worktree
-function M.prompt_create()
-  vim.ui.input({ prompt = "New worktree branch name: " }, function(name)
-    if not name or name == "" then
-      return
-    end
-    vim.ui.input({ prompt = "Start point (empty for HEAD): " }, function(start_point)
-      git_wt.create(name, start_point)
-    end)
-  end)
 end
 
 return M

@@ -85,28 +85,22 @@ function M.cd(dir)
   end
 end
 
---- Switch to an existing worktree by path
----@param path string
-function M.switch(path)
-  M.cd(path)
-end
-
---- Create a new worktree (and optionally switch to it)
+--- Switch to a worktree (create if it doesn't exist), mirroring `git wt <branch> [start-point]`
 ---@param name string branch/worktree name
----@param start_point? string optional start-point
+---@param start_point? string optional start-point for new worktree
 ---@param cb? fun(path: string?)
-function M.create(name, start_point, cb)
+function M.checkout(name, start_point, cb)
   local args = { "--nocd", name }
   if start_point and start_point ~= "" then
     table.insert(args, start_point)
   end
   M.run(args, nil, function(stdout, stderr, code)
     if code ~= 0 then
-      vim.notify("git-wt create: " .. stderr, vim.log.levels.ERROR)
+      vim.notify("git-wt: " .. stderr, vim.log.levels.ERROR)
       if cb then cb(nil) end
       return
     end
-    -- After creation, find the new worktree path from the list
+    -- Find the worktree path from the list and cd to it
     M.list(function(worktrees)
       for _, wt in ipairs(worktrees) do
         if wt.branch == name then
@@ -115,7 +109,7 @@ function M.create(name, start_point, cb)
           return
         end
       end
-      vim.notify("git-wt: created but could not find worktree path", vim.log.levels.WARN)
+      vim.notify("git-wt: could not find worktree path for '" .. name .. "'", vim.log.levels.WARN)
       if cb then cb(nil) end
     end)
   end)
