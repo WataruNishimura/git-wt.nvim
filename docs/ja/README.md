@@ -113,6 +113,10 @@ git_wt.delete("feature-branch", false, function(ok) end)  -- 安全な削除
 git_wt.delete("feature-branch", true, function(ok) end)   -- 強制削除
 ```
 
+## 謝辞
+
+このプラグインは [@k1LoW](https://github.com/k1LoW) 氏の [git-wt](https://github.com/k1LoW/git-wt) をベースにしています。シンプルかつ強力な Git worktree 管理 CLI を作ってくださったことに感謝します。
+
 ## ライセンス
 
 MIT

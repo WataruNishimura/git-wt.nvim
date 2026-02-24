@@ -113,6 +113,10 @@ git_wt.delete("feature-branch", false, function(ok) end)  -- safe delete
 git_wt.delete("feature-branch", true, function(ok) end)   -- force delete
 ```
 
+## Acknowledgements
+
+This plugin is built on top of [git-wt](https://github.com/k1LoW/git-wt) by [@k1LoW](https://github.com/k1LoW). Thanks for creating such a clean and powerful CLI for Git worktree management.
+
 ## License
 
 MIT
