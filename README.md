@@ -79,8 +79,29 @@ require("git-wt").setup({
     --   vim.cmd("Neotree dir=" .. dir)
     -- end,
   },
+
+  -- Built-in integrations (default: all enabled)
+  integrations = {
+    -- Restart claudecode.nvim session in the new worktree directory (default: true)
+    claudecode = true,
+
+    -- Send `cd <dir>` to all open terminal buffers (default: true)
+    terminal_cd = true,
+  },
 })
 ```
+
+### Integrations
+
+#### claudecode.nvim
+
+When [claudecode.nvim](https://github.com/anthropics/claude-code/tree/main/packages/neovim) is installed and its server is running, the plugin automatically restarts the Claude Code session after switching worktrees so that Claude picks up the new working directory.
+
+If claudecode.nvim is not installed, this integration is silently skipped.
+
+#### Terminal buffers
+
+After switching worktrees, the plugin sends `cd <dir>` to every open Neovim terminal buffer (`:terminal`) so that shell sessions stay in sync with the new working directory.
 
 ## How It Works
 

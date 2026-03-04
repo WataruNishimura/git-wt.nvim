@@ -79,8 +79,29 @@ require("git-wt").setup({
     --   vim.cmd("Neotree dir=" .. dir)
     -- end,
   },
+
+  -- 組み込み連携機能（デフォルト: すべて有効）
+  integrations = {
+    -- ワークツリー切り替え時に claudecode.nvim のセッションを再起動（デフォルト: true）
+    claudecode = true,
+
+    -- 開いているターミナルバッファに `cd <dir>` を送信（デフォルト: true）
+    terminal_cd = true,
+  },
 })
 ```
+
+### 連携機能
+
+#### claudecode.nvim
+
+[claudecode.nvim](https://github.com/anthropics/claude-code/tree/main/packages/neovim) がインストールされていてサーバーが起動中の場合、ワークツリー切り替え後に Claude Code セッションを自動的に再起動し、新しい作業ディレクトリを反映します。
+
+claudecode.nvim がインストールされていない場合、この連携はスキップされます。
+
+#### ターミナルバッファ
+
+ワークツリー切り替え後、開いているすべての Neovim ターミナルバッファ（`:terminal`）に `cd <dir>` を送信し、シェルセッションのディレクトリも新しいワークツリーに同期します。
 
 ## 仕組み
 
