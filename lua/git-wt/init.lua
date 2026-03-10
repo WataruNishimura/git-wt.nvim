@@ -7,6 +7,13 @@ M.config = {
   notify = true,
   -- Hooks to run after cd (e.g., refresh neo-tree)
   hooks = {},
+  -- Built-in integrations
+  integrations = {
+    -- Restart claudecode.nvim session in the new worktree directory
+    claudecode = true,
+    -- Send `cd <dir>` to all open terminal buffers
+    terminal_cd = true,
+  },
 }
 
 function M.setup(opts)
@@ -67,6 +74,34 @@ function M.list(cb)
   end)
 end
 
+--- Restart claudecode.nvim session so it picks up the new cwd
+---@param dir string
+local function restart_claudecode(dir)
+  local ok, claudecode = pcall(require, "claudecode")
+  if not ok then
+    return
+  end
+  -- Only restart if the server is already running
+  if not (claudecode.state and claudecode.state.server) then
+    return
+  end
+  claudecode.stop()
+  claudecode.start(false)
+end
+
+--- Send `cd <dir>` to every open terminal buffer
+---@param dir string
+local function cd_terminal_buffers(dir)
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype == "terminal" then
+      local chan = vim.bo[buf].channel
+      if chan and chan > 0 then
+        vim.api.nvim_chan_send(chan, "cd " .. vim.fn.shellescape(dir) .. "\n")
+      end
+    end
+  end
+end
+
 --- Change Neovim's cwd and trigger events so neo-tree etc. follow along
 ---@param dir string
 function M.cd(dir)
@@ -75,6 +110,14 @@ function M.cd(dir)
 
   if M.config.notify then
     vim.notify("git-wt: switched to " .. dir)
+  end
+
+  -- Built-in integrations
+  if M.config.integrations.claudecode then
+    restart_claudecode(dir)
+  end
+  if M.config.integrations.terminal_cd then
+    cd_terminal_buffers(dir)
   end
 
   -- Run user-defined hooks
